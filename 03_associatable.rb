@@ -1,7 +1,6 @@
 require_relative '02_searchable'
 require 'active_support/inflector'
 
-
 class AssocOptions
   attr_accessor(
     :foreign_key,
@@ -38,11 +37,21 @@ end
 module Associatable
 
   def belongs_to(name, options = {})
+    options = BelongsToOptions.new(name, options)
 
+    define_method(name) do
+      key = send(options.foreign_key)
+      options.model_class.where(options.primary_key => key)[0]
+    end
   end
 
   def has_many(name, options = {})
+    options =  HasManyOptions.new(name, self.name, options)
 
+    define_method(name) do
+      key = send(options.primary_key)
+      options.model_class.where(options.foreign_key => key)
+    end
   end
 
   def assoc_options
@@ -51,5 +60,5 @@ module Associatable
 end
 
 class SQLObject
-
+  extend Associatable
 end
